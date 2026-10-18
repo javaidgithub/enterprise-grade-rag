@@ -1,0 +1,28 @@
+# Runtime
+fastapi>=0.111.0
+uvicorn[standard]>=0.29.0
+python-multipart>=0.0.9          # FastAPI file uploads
+python-dotenv>=1.0.0
+
+# Google Gemini New Unified SDK
+google-genai>=1.0.0
+
+# LlamaIndex core + Updated Google GenAI integrations
+llama-index-core>=0.10.0
+llama-index-llms-google-genai>=0.9.0
+llama-index-embeddings-google-genai>=0.4.0
+
+# Streamlit frontend
+streamlit>=1.35.0
+requests>=2.32.0
+
+docling
+easyocr
+onnxruntime
+
+
+# For PII detection and anonymization
+presidio-analyzer 
+presidio-anonymizer
+
+# uv pip install https://github.com/explosion/spacy-models/releases/download/en_core_web_md-3.7.1/en_core_web_md-3.7.1-py3-none-any.whl

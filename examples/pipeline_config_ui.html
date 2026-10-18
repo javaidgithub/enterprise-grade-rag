@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Docling Pipeline Config</title>
+<style>
+  :root{
+    --bg:#0E1113;
+    --panel:#161A1D;
+    --panel-2:#1D2226;
+    --line:#2A3034;
+    --text:#E7EAEC;
+    --text-dim:#8B9298;
+    --amber:#E8A33D;
+    --amber-dim:#4A3A20;
+    --cyan:#5FB8B0;
+    --red:#C9584F;
+    --mono: "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+    --sans: -apple-system, "Segoe UI", Inter, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font-family:var(--sans); padding:28px 20px 60px;
+  }
+  .wrap{max-width:1040px; margin:0 auto;}
+  .head{margin-bottom:22px;}
+  .eyebrow{
+    font-family:var(--mono); font-size:11px; letter-spacing:.14em;
+    color:var(--amber); text-transform:uppercase; margin-bottom:6px;
+  }
+  h1{font-size:22px; margin:0 0 6px; font-weight:650; letter-spacing:-.01em;}
+  .sub{color:var(--text-dim); font-size:13.5px; max-width:560px; line-height:1.5;}
+
+  .stage-list{
+    display:flex; flex-direction:column; gap:1px;
+    background:var(--line); border:1px solid var(--line); border-radius:10px;
+    overflow:hidden; margin-top:20px;
+  }
+  .stage{
+    background:var(--panel); padding:16px 18px; display:grid;
+    grid-template-columns: 190px 1fr auto; gap:16px; align-items:center;
+  }
+  .stage-name{font-size:14px; font-weight:600;}
+  .stage-desc{font-size:12px; color:var(--text-dim); margin-top:2px; line-height:1.4;}
+
+  .seg{
+    display:inline-flex; border:1px solid var(--line); border-radius:8px; overflow:hidden;
+    font-family:var(--mono); font-size:12px;
+  }
+  .seg button{
+    background:var(--panel-2); color:var(--text-dim); border:none; padding:8px 14px;
+    cursor:pointer; border-right:1px solid var(--line); transition:.12s;
+  }
+  .seg button:last-child{border-right:none;}
+  .seg button:hover:not(:disabled){color:var(--text);}
+  .seg button:disabled{opacity:.3; cursor:not-allowed;}
+  .seg button.active{background:var(--amber-dim); color:var(--amber); font-weight:600;}
+  .seg button.active[data-mode="disabled"]{background:#3A2321; color:var(--red);}
+  .seg button.active[data-mode="custom"]{background:#1D3634; color:var(--cyan);}
+
+  .custom-fields{
+    display:flex; gap:8px; flex-wrap:wrap; min-width:220px;
+  }
+  .custom-fields input{
+    background:var(--bg); border:1px solid var(--line); color:var(--text);
+    font-family:var(--mono); font-size:11.5px; padding:6px 8px; border-radius:6px;
+    width:150px;
+  }
+  .custom-fields input::placeholder{color:#5b6266;}
+  .hint{font-size:11px; color:#5b6266; font-family:var(--mono);}
+
+  .out{
+    margin-top:26px; background:var(--panel); border:1px solid var(--line);
+    border-radius:10px; overflow:hidden;
+  }
+  .out-head{
+    display:flex; justify-content:space-between; align-items:center;
+    padding:10px 16px; border-bottom:1px solid var(--line); background:var(--panel-2);
+  }
+  .out-head span{font-family:var(--mono); font-size:11px; color:var(--text-dim); letter-spacing:.08em;}
+  .copy-btn{
+    background:transparent; border:1px solid var(--line); color:var(--text-dim);
+    font-family:var(--mono); font-size:11px; padding:5px 10px; border-radius:6px; cursor:pointer;
+  }
+  .copy-btn:hover{color:var(--text); border-color:#4b5257;}
+  pre{
+    margin:0; padding:16px 18px; font-family:var(--mono); font-size:12.5px;
+    line-height:1.65; overflow-x:auto; color:#CFE8E4;
+  }
+  .k{color:var(--amber);}
+  .s{color:#9FCB8F;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <div class="eyebrow">Docling · Pipeline Setup</div>
+    <h1>Configure each stage</h1>
+    <div class="sub">Pick Disabled, Built-in, or Custom per stage. Stages without a native skip point (layout, reading order, export) can't be disabled — Custom runs as a post-processing hook on top of them.</div>
+  </div>
+
+  <div class="stage-list" id="stageList"></div>
+
+  <div class="out">
+    <div class="out-head">
+      <span>GENERATED CONFIG — docling_pipeline_config.py</span>
+      <button class="copy-btn" onclick="copyOut()">Copy</button>
+    </div>
+    <pre id="codeOut"></pre>
+  </div>
+</div>
+
+<script>
+const STAGES = [
+  {id:"layout", name:"Layout Detection", desc:"Page regions: text, headings, tables, figures.", disableable:false},
+  {id:"ocr", name:"OCR", desc:"Extract text from scans and images.", disableable:true, customField:{key:"engine", placeholder:"e.g. tesseract_cli"}},
+  {id:"table_structure", name:"Table Structure", desc:"Rows, columns, merged cells, headers.", disableable:true},
+  {id:"figure_classification", name:"Figure Classification", desc:"Classify figures, charts, diagrams.", disableable:true},
+  {id:"vlm", name:"Vision-Language Model", desc:"Multimodal understanding; replaces layout/OCR/tables when on.", disableable:true, customField:{key:"model_name", placeholder:"e.g. google/gemini-2.5-flash"}},
+  {id:"reading_order", name:"Reading Order", desc:"Determine correct reading sequence.", disableable:false},
+  {id:"export", name:"Export", desc:"Markdown, HTML, JSON, or DocTags.", disableable:false},
+];
+
+// initial selections match the requested mockup
+const state = {
+  layout:"builtin", ocr:"custom", table_structure:"builtin",
+  figure_classification:"custom", vlm:"disabled", reading_order:"builtin", export:"builtin",
+};
+const customValues = {};
+
+function render(){
+  const list = document.getElementById("stageList");
+  list.innerHTML = "";
+  STAGES.forEach(stage => {
+    const row = document.createElement("div");
+    row.className = "stage";
+
+    const modes = ["disabled","builtin","custom"];
+    const seg = document.createElement("div");
+    seg.className = "seg";
+    modes.forEach(m => {
+      const btn = document.createElement("button");
+      btn.textContent = m === "disabled" ? "Disabled" : m === "builtin" ? "Built-in" : "Custom";
+      btn.dataset.mode = m;
+      if (m === "disabled" && !stage.disableable) btn.disabled = true;
+      if (state[stage.id] === m) btn.classList.add("active");
+      btn.onclick = () => { state[stage.id] = m; render(); };
+      seg.appendChild(btn);
+    });
+
+    const fields = document.createElement("div");
+    fields.className = "custom-fields";
+    if (state[stage.id] === "custom" && stage.customField) {
+      const inp = document.createElement("input");
+      inp.placeholder = stage.customField.placeholder;
+      inp.value = customValues[stage.id] || "";
+      inp.oninput = e => { customValues[stage.id] = e.target.value; render(); };
+      fields.appendChild(inp);
+    } else if (state[stage.id] === "custom") {
+      const hint = document.createElement("span");
+      hint.className = "hint";
+      hint.textContent = "custom_impl = <your callable>";
+      fields.appendChild(hint);
+    }
+
+    row.innerHTML = `<div><div class="stage-name">${stage.name}</div><div class="stage-desc">${stage.desc}</div></div>`;
+    row.appendChild(seg);
+    row.appendChild(fields);
+    list.appendChild(row);
+  });
+  renderCode();
+}
+
+function pyMode(m){ return {disabled:"StageMode.DISABLED", builtin:"StageMode.BUILTIN", custom:"StageMode.CUSTOM"}[m]; }
+
+function renderCode(){
+  const lines = [];
+  lines.push('<span class="k">config</span> = DoclingPipelineConfig(');
+  lines.push(`    layout=LayoutStageConfig(mode=${pyMode(state.layout)}),`);
+  lines.push(`    ocr=OcrStageConfig(mode=${pyMode(state.ocr)}${state.ocr==="custom" ? `, custom_impl=<span class="s">"${customValues.ocr||'YOUR_OCR_OPTIONS'}"</span>` : ""}),`);
+  lines.push(`    table_structure=TableStructureStageConfig(mode=${pyMode(state.table_structure)}, builtin_mode=<span class="s">"accurate"</span>),`);
+  lines.push(`    figure_classification=FigureClassificationStageConfig(mode=${pyMode(state.figure_classification)}${state.figure_classification==="custom" ? ", custom_impl=my_custom_figure_classifier" : ""}),`);
+  lines.push(`    vlm=VlmStageConfig(mode=${pyMode(state.vlm)}${state.vlm==="custom" ? `, model_name=<span class="s">"${customValues.vlm||'YOUR_MODEL'}"</span>` : ""}),`);
+  lines.push(`    reading_order=ReadingOrderStageConfig(mode=${pyMode(state.reading_order)}),`);
+  lines.push(`    export=ExportStageConfig(mode=${pyMode(state.export)}, builtin_format=<span class="s">"markdown"</span>),`);
+  lines.push(')');
+  lines.push('');
+  lines.push('converter = build_converter(config)');
+  lines.push('result = converter.convert(<span class="s">"document.pdf"</span>)');
+  lines.push('print(converter.export(result))');
+  document.getElementById("codeOut").innerHTML = lines.join("\n");
+}
+
+function copyOut(){
+  const text = document.getElementById("codeOut").innerText;
+  navigator.clipboard.writeText(text);
+}
+
+render();
+</script>
+</body>
+</html>
