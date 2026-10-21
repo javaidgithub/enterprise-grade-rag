@@ -21,7 +21,7 @@ easyocr
 onnxruntime
 
 
-# For PII detection and anonymization
+# For PII detection and guradrails
 presidio-analyzer 
 presidio-anonymizer
 
