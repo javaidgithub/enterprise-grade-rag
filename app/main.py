@@ -46,11 +46,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# The pure-Docling pipeline saves a cropped PNG for every extracted figure
-# to ./figures/<document_id>/<fig_id>.png (see DoclingService._extract_figures
-# / FIGURES_OUTPUT_DIR) and only stores that relative path in `imageLink` --
-# it never sets `base64Image` for these. Without this mount, the Streamlit
-# UI (or any client) has no way to actually fetch and display them.
+
 os.makedirs("figures", exist_ok=True)
 app.mount("/figures", StaticFiles(directory="figures"), name="figures")
 
