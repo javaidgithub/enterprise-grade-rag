@@ -6,7 +6,7 @@ Mirrors every feature of:
   - ChatInterface.tsx (messages, masked/unmasked toggle, colour-coded trace logs,
                        citation cards with score + quote, quick-prompt chips)
   - DocumentManager.tsx (drag-and-drop uploader, document list with badges,
-                         tabbed inspector: Structured Markdown / Tables / Figures / Raw Text)
+                         tabbed inspector: Structured Markdown / Tables / Figures / Raw Text data)
   - SettingsPanel.tsx   (all sliders, reranker select, PII mapping audit table)
 
 Run order:
