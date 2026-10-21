@@ -1,4 +1,4 @@
-# Normalise line endings so Windows (CRLF) and macOS/Linux (LF) contributors don't create noisy diffs
+# Normalise line endings so Windows (CRLF) and macOS/Linux (LF) contributors don't create unnecessary diffs.
 * text=auto
 *.png binary
 *.pdf binary
