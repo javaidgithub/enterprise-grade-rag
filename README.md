@@ -319,7 +319,7 @@ enterprise-grade-rag/
 This is a strong foundation and a learning-grade reference, not a hardened production service. Please be aware of:
 
 - **Single-process state.** Index, settings and PII mappings live in class-level state, so run **one worker**. There is no authentication and CORS allows all origins; add both before exposing it.
-- **Guardrails are LLM-based.** They can be bypassed or misfire, the security check fails open on errors, and the grounding check reports but does not block.
+- **Guardrails are LLM-based.** They can be bypassed or misfire, the security check fails open on errors, and the grounding check reports but does not block the response.
 - **Fallback search is unmasked.** The keyword-scan fallback reads original parsed text (see *What leaves your machine?*).
 - **Sensitive data sits in plaintext on disk.** `storage/pii_mappings.json` maps placeholders back to the original values (shared across all documents), and `storage/docs_index.json` keeps the original parsed text. Protect or encrypt that directory in real deployments, and never commit it (it is git-ignored).
 - **Presidio defaults are broad.** Entity types such as dates, URLs and nationalities are also masked, which can hurt retrieval quality. Restrict the entity list if needed.
