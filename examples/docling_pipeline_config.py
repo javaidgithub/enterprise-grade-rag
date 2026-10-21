@@ -64,8 +64,6 @@ DISABLE_CAPABLE_STAGES = {
     "figure_classification",
     "vlm",
 }
-# Layout, reading_order and export cannot be meaningfully "disabled" in
-# Docling (you'd get no document at all), so DISABLED is not offered there.
 
 
 class UnsupportedStageModeError(ValueError):
